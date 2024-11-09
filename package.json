@@ -1,0 +1,39 @@
+{
+  "name": "gtechcenter_backend",
+  "version": "1.0.0",
+  "description": "Bakcned for gtechcenter project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon dist/index.js",
+    "build": "tsc",
+    "dev": "ts-node-dev --respawn --transpile-only index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CK-EmbPro/gtechcenter_backend.git"
+  },
+  "author": "CK-Debrice",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CK-EmbPro/gtechcenter_backend/issues"
+  },
+  "homepage": "https://github.com/CK-EmbPro/gtechcenter_backend#readme",
+  "dependencies": {
+    "cloudinary": "^2.5.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "mongoose": "^8.8.0",
+    "multer": "^1.4.5-lts.1",
+    "streamifier": "^0.1.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^22.9.0",
+    "nodemon": "^3.1.7",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.6.3"
+  }
+}
