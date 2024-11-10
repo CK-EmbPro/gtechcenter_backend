@@ -1,6 +1,6 @@
 import Router from "express"
-import { createBlog, deleteBlog, getAllBlogs, getSingleBlog, updateBlog } from "../controllers/blogController"
-import { upload } from "../utils/multerConfig"
+import { createBlog, deleteAllBlogs, deleteBlog, getAllBlogs, getSingleBlog, updateBlog } from "../controllers/blogController"
+import { upload } from "../config/multerConfig"
 
 export const blogRouter = Router()
 
@@ -18,4 +18,7 @@ blogRouter.put('/blogs/:blog_id',upload.single('file'), updateBlog)
 
 // @ts-ignore
 blogRouter.delete('/blogs/:blog_id', deleteBlog)
+
+// @ts-ignore
+blogRouter.delete('/blogs', deleteAllBlogs)
 

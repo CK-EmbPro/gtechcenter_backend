@@ -104,3 +104,26 @@ export const deleteContact = async (req: Request, res: Response) => {
         })
     }
 }
+
+export const deleteAllContacts= async(req: Request, res: Response)=>{
+    try {
+        
+   
+    const contacts = await ContactModel.find()
+    if(contacts.length===0){
+        return res.status(404).json({
+            message: "No contacts to delete", 
+            contacts
+        })
+    }
+
+    await ContactModel.deleteMany()
+    return res.status(204).json({
+        message: "All Contacts deleted successfully"
+    })
+} catch (error) {
+    return res.status(500).json({
+        message: "Error while deleting all contacts"
+    })
+}
+}

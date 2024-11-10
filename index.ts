@@ -2,7 +2,7 @@ import express, {Express, Request, Response } from "express";
 import dotenv from "dotenv"
 import {contactRouter} from './routes/contactRoutes'
 import { subscriptionRouter } from "./routes/subscriptionRoutes";
-import { connectToDb } from "./utils/dbConnection";
+import { connectToDb } from "./config/dbConnection";
 import { blogRouter } from "./routes/blogRoutes";
 // Load environment variables
 dotenv.config()
