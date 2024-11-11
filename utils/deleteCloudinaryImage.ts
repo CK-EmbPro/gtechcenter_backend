@@ -1,5 +1,6 @@
 import cloudinary from "../config/cloudinaryConfig"
 
+// Use publicId to destroy / delete an image from cloudinary
 export const deleteCloudinaryImage =async (imagePublicId: string)=>{
     try {
         const result= await cloudinary.uploader.destroy(imagePublicId)
