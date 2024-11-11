@@ -5,6 +5,14 @@ import { Request, Response } from "express";
 export const createSubscription = async (req: Request, res: Response) => {
   try {
     const { email, name } = req.body;
+    // Check if subscription already exists
+    const existingSubscription = await SubscriptionModel.findOne({email, name})
+    if(existingSubscription){
+      return res.status(409).json({
+        message: "Subscription already exists",
+        existingSubscription
+      })
+    }
     const now = new Date();
     const subscriptionDate = now.toISOString().split("T")[0];
     const subscriptionTime = now.toTimeString().slice(0, 5);
@@ -14,6 +22,8 @@ export const createSubscription = async (req: Request, res: Response) => {
       subscriptionDate,
       subscriptionTime,
     });
+
+
     await createdSubscription.save();
     return res.status(201).json({
       message: "Subscription created successfully",
