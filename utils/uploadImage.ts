@@ -1,52 +1,52 @@
 import fs from "fs";
 import cloudinary from "../config/cloudinaryConfig";
 import path from "path";
-import crypto from "crypto"
-import { match } from "assert";
+import crypto from "crypto";
 
 export const uploadImage = async (filePath: string) => {
   try {
     const folder = "blogs";
     const fileName = path.basename(filePath);
-    const fileHash = crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex')
+    // now remove the file extension
+    const onlyFileName = path.parse(fileName).name;
 
+    // Search if the uploaded file exists there at cloudinary
     const existingImage = await cloudinary.search
-      .expression(`folder:${folder} AND filename:${fileName} AND public_id:${fileHash}`)
-      .max_results(10)
+      .expression(`folder:${folder} AND filename:${onlyFileName}`)
+      .max_results(1)
       .execute();
 
-      const matchedImage = existingImage.resources.find((image)=>{
-        return image.public_id&& image.signature === fileHash
-    }
-    )
-      
-    if (matchedImage) {
-      console.log("IMage exists there in cloud storage");
-      const existingImageUrl = matchedImage.secure_url;
-      const existingImagePublicId = matchedImage.public_id;
+    // Check if the uploaded file truly exists 
+    if (existingImage.resources[0]) {
+      console.log("Image already exists in cloud storage.");
 
+      const matchedImage = existingImage.resources[0];
       fs.unlinkSync(filePath);
-      
       const containingDirectoryPath = path.dirname(filePath);
       fs.rmSync(containingDirectoryPath, { recursive: true, force: true });
 
       return {
-        imageUrl: existingImageUrl,
-        imagePublicId: existingImagePublicId,
+        imageUrl: matchedImage.secure_url,
+        imagePublicId: matchedImage.public_id,
       };
     }
 
+    // Now upload the image to the cloudinary if is not there
     const result = await cloudinary.uploader.upload(filePath, {
-      folder: "blogs", // Optional: specify a folder in your Cloudinary account
+      folder: "blogs",
+      use_filename: true,
+      unique_filename: false,
     });
 
     fs.unlinkSync(filePath);
-    // determine the containing folder
     const containingDirectoryPath = path.dirname(filePath);
-    // remove the folder and all its contents after uploading to cloudinary
     fs.rmSync(containingDirectoryPath, { recursive: true, force: true });
 
-    return { imageUrl: result.url, imagePublicId: result.public_id }; // URL of the uploaded image
+    return { 
+      imageUrl: result.secure_url, 
+      imagePublicId: result.public_id 
+    };
+
   } catch (error) {
     console.error("Error uploading image:", error);
     throw error;
