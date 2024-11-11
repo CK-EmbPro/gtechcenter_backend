@@ -14,8 +14,25 @@ export const createBlog = async (req: MulterRequest, res: Response) => {
     if (!filePath || !fs.existsSync(filePath)) {
       throw new Error("File does not exist or is not accessible");
     }
-    const { imageUrl, imagePublicId } = await uploadImage(filePath);
+
     const { title, category, description } = req.body;
+
+    // Check if the blog exists with same title
+    const existingBlogWithTitle = await BlogModel.findOne({title})
+    const existingBlogAsWhole = await BlogModel.findOne({title, category, description})
+    if(existingBlogAsWhole){
+      return res.status(409).json({
+        message: "Blog already exists",
+        existingBlog: existingBlogAsWhole
+      })
+    }else if(existingBlogWithTitle){
+      return res.status(409).json({
+        message: "Blog already exists with same title",
+        existingBlog: existingBlogWithTitle
+      })
+    }
+
+    const { imageUrl, imagePublicId } = await uploadImage(filePath);
     const blogToSave = new BlogModel({
       title,
       category,
@@ -42,6 +59,7 @@ export const updateBlog = async (req: MulterRequest, res: Response) => {
     const { blog_id } = req.params;
     let updatedBlogData = req.body;
     const filePath = req.file?.path;
+
     if (!filePath || !fs.existsSync(filePath)) {
       throw new Error("plz upload a file");
     }
@@ -61,7 +79,7 @@ export const updateBlog = async (req: MulterRequest, res: Response) => {
 
     return res.status(200).json({
       message: "Updated blog successfully",
-      updateBlog,
+      updatedBlog,
     });
   } catch (error) {
     res.status(500).json({
@@ -154,6 +172,7 @@ export const deleteAllBlogs = async(req:Request, res:Response)=>{
     } catch (error) {
         res.status(500).json({
             message: "Error while deleting all blogs",
+            error
         })
     }
 }
