@@ -6,7 +6,18 @@ import {ContactModel} from "../models/Contacts";
 
 export const createContact = async (req: Request, res: Response) => {
     try {
+        
         const {first_name, last_name, subject, message} = req.body
+        // Check if the same contact exists
+        const existingBlog = await ContactModel.findOne({first_name, last_name, subject, message})
+        if(existingBlog){
+            return res.status(409).json({
+                message: "The same contact already exists",
+                existingBlog
+            })
+        }
+
+        //Now continue if to create new contact 
         const contactToBeSaved = new ContactModel({first_name, last_name, subject, message})
         await contactToBeSaved.save()
         return res.status(201).json({
@@ -14,6 +25,7 @@ export const createContact = async (req: Request, res: Response) => {
             contact: contactToBeSaved
 
         })
+
     } catch (error) {
         console.error(error)
         return res.status(500).json({
