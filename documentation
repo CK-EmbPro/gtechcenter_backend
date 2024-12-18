@@ -1,2 +1,6 @@
 before saving use a pre method to hash the password
 create a function to compare the password input by the user to the password of user found
+
+
+viewing current user information
+Remaining with implementing the the admin part

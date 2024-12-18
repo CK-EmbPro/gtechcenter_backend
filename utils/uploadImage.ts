@@ -8,7 +8,7 @@ export const uploadImage = async (filePath: string) => {
     const folder = "blogs";
     const fileName = path.basename(filePath);
     // now remove the file extension
-    const onlyFileName = path.parse(fileName).name;
+    const onlyFileName = path.parse(fileName).name.replace(/\s+/g, '');
 
     // Search if the uploaded file exists there at cloudinary
     const existingImage = await cloudinary.search
@@ -18,8 +18,7 @@ export const uploadImage = async (filePath: string) => {
 
     // Check if the uploaded file truly exists 
     if (existingImage.resources[0]) {
-      console.log("Image already exists in cloud storage.");
-
+      
       const matchedImage = existingImage.resources[0];
       fs.unlinkSync(filePath);
       const containingDirectoryPath = path.dirname(filePath);
@@ -28,6 +27,7 @@ export const uploadImage = async (filePath: string) => {
       return {
         imageUrl: matchedImage.secure_url,
         imagePublicId: matchedImage.public_id,
+        fileName
       };
     }
 
@@ -35,7 +35,7 @@ export const uploadImage = async (filePath: string) => {
     const result = await cloudinary.uploader.upload(filePath, {
       folder: "blogs",
       use_filename: true,
-      unique_filename: false,
+      unique_filename: true,
     });
 
     fs.unlinkSync(filePath);
@@ -44,11 +44,11 @@ export const uploadImage = async (filePath: string) => {
 
     return { 
       imageUrl: result.secure_url, 
-      imagePublicId: result.public_id 
+      imagePublicId: result.public_id,
+      fileName
     };
 
   } catch (error) {
-    console.error("Error uploading image:", error);
-    throw error;
+    throw error
   }
 };

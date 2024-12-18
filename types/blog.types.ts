@@ -4,4 +4,7 @@ export type Blog={
     description: string;
     imageUrl: string,
     imagePublicId: string
+    lastlyUpdatedDate: string;
+    lastlyUpdatedTime: string;
+    fileName: string
 }

@@ -5,25 +5,33 @@ import { subscriptionRouter } from "./routes/subscriptionRoutes";
 import { connectToDb } from "./config/dbConnection";
 import { blogRouter } from "./routes/blogRoutes";
 import { authRouter } from "./routes/authRoutes";
+import { authMiddleware } from "./middlewares/AuthMiddleware";
+import cors from 'cors'
+
 // Load environment variables
 dotenv.config()
 
-const app: Express = express()
+const app:Express = express()
 const port= process.env.PORT
 
 // Establish connection to mongo_atlas db
-connectToDb()
 
+app.use(cors({
+    origin: "*"
+}))
+connectToDb()
 app.use(express.json())
-app.use('/api', contactRouter)
-app.use('/api',subscriptionRouter )
-app.use('/api', blogRouter)
+
 app.use('/api/auth', authRouter)
-app.get("/", (req: Request, res: Response)=>{
-    res.send("Express with ts")
-})
+//@ts-ignore
+app.use('/api', contactRouter)
+//@ts-ignore
+app.use('/api', subscriptionRouter )
+//@ts-ignore
+app.use('/api', blogRouter)
+
 
  
 app.listen(port, ()=>{
-    console.log(`running on http://localhost:${port}`);
+    console.log(`listening on http://localhost:${port}`);
 })

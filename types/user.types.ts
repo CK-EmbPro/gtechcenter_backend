@@ -1,5 +1,10 @@
+import { ROLES } from "../constants/userRoles";
+
 export type User = {
-    names: string;
-    email: string;
-    password: string;
-}
+  first_name: string;
+  last_name: string;
+  email: string;
+  password: string;
+  phone_number: number;
+  role?: (typeof ROLES)[keyof typeof ROLES];
+};

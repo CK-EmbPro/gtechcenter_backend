@@ -1,16 +1,20 @@
+import { UnAuthorizedError } from "../exceptions/errors";
 import { BlogModel } from "../models/Blogs";
 import { SubscriptionModel } from "../models/SubscriptionToUpdates";
 import { Request, Response } from "express";
+import mongoose from "mongoose"
+import { emailSender } from "../utils/emailSender";
+import { EMAILCONTEXT } from "../constants/emailContext";
 
 export const createSubscription = async (req: Request, res: Response) => {
   try {
-    const { email, name } = req.body;
+    const { email } = req.body;
     // Check if subscription already exists
-    const existingSubscription = await SubscriptionModel.findOne({email, name})
+    const existingSubscription = await SubscriptionModel.findOne({email})
     if(existingSubscription){
       return res.status(409).json({
         message: "Subscription already exists",
-        existingSubscription
+        subscription: existingSubscription
       })
     }
     const now = new Date();
@@ -18,22 +22,34 @@ export const createSubscription = async (req: Request, res: Response) => {
     const subscriptionTime = now.toTimeString().slice(0, 5);
     const createdSubscription = new SubscriptionModel({
       email,
-      name,
       subscriptionDate,
       subscriptionTime,
     });
 
 
     await createdSubscription.save();
+
+    emailSender(email, EMAILCONTEXT.SUBSCRIPTION)
+
     return res.status(201).json({
       message: "Subscription created successfully",
-      createdSubscription,
+      subscription: createdSubscription,
     });
   } catch (error) {
-    return res.status(500).json({
-      message: "Error while creating subscription",
-      error,
-    });
+    if(error instanceof mongoose.Error.ValidationError ){
+      const validationErrors = Object.values(error.errors).map(err=>err?.message)
+      return res.status(400).json({
+        message: validationErrors[0],
+        errors: validationErrors
+      })
+
+    }else if(error instanceof Error){
+      return res.status(500).json({
+        message: "Error while creating subscription at backend",
+        error:error.message,
+      });
+    }
+   
   }
 };
 
@@ -45,10 +61,26 @@ export const getAllSubscriptions = async (req: Request, res: Response) => {
       subscriptions,
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Error while retrieving subscriptions",
-      error,
-    });
+    if(error instanceof UnAuthorizedError){
+      res.status(403).json({
+        message: "Forbidden operation",
+        error: error.message
+      })
+    }
+    if(error instanceof Error){
+      res.status(500).json({
+        message: "Error while retrieving subscriptions",
+        error:error.message,
+      });
+    }else if(error instanceof mongoose.Error.ValidationError ){
+      const validationErrors = Object.values(error.errors).map(err=>err?.message)
+      return res.status(400).json({
+        message: "Model validation error",
+        errors: validationErrors
+      })
+
+    }
+  
   }
 };
 
@@ -67,17 +99,33 @@ export const getSingleSubscription = async (req: Request, res: Response) => {
       subscription,
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Error while retrieving subscriptions",
-      error,
-    });
+    if(error instanceof Error){
+      res.status(500).json({
+        message: "Error while retrieving subscriptions",
+        error: error.message,
+      });
+    }else if(error instanceof mongoose.Error.ValidationError ){
+      const validationErrors = Object.values(error.errors).map(err=>err?.message)
+      return res.status(400).json({
+        message: "Model validation error",
+        errors: validationErrors
+      })
+
+    }
+ 
   }
 };
 
 export const updateSubscription = async (req: Request, res: Response) => {
   try {
     const { sub_id } = req.params;
-    const updatedSubscriptionData = req.body;
+    let updatedSubscriptionData = req.body;
+
+    const now = new Date();
+    const subscriptionDate = now.toISOString().split("T")[0];
+    const subscriptionTime = now.toTimeString().slice(0, 5);
+
+    updatedSubscriptionData = {...updatedSubscriptionData, subscriptionDate, subscriptionTime}
     const updatedSubscription = await SubscriptionModel.findByIdAndUpdate(
       sub_id,
       updatedSubscriptionData,
@@ -91,13 +139,23 @@ export const updateSubscription = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       message: "Subscription updated successfully",
-      updatedSubscription,
+      subscription: updatedSubscription,
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Error while retrieving subscriptions",
-      error,
-    });
+    if(error instanceof Error){
+      res.status(500).json({
+        message: "Error while retrieving subscriptions",
+        error: error.message,
+      });
+    }else if(error instanceof mongoose.Error.ValidationError ){
+      const validationErrors = Object.values(error.errors).map(err=>err?.message)
+      return res.status(400).json({
+        message: "Model validation error",
+        errors: validationErrors
+      })
+
+    }
+   
   }
 };
 
@@ -116,30 +174,51 @@ export const deleteSubscription = async (req: Request, res: Response) => {
     return res.status(204).json({
       message: "Subscription deleted successfully",
     });
-  } catch (error) {
-    res.status(500).json({
-      message: "Error while retrieving subscriptions",
-      error,
-    });
+  } catch (error){
+    if(error instanceof Error){
+      res.status(500).json({
+        message: "Error while retrieving subscriptions",
+        error:error.message,
+      });
+    }else if(error instanceof mongoose.Error.ValidationError ){
+      const validationErrors = Object.values(error.errors).map(err=>err?.message)
+      return res.status(400).json({
+        message: "Model validation error",
+        errors: validationErrors
+      })
+
+    }
+   
   }
 };
 
 export const deleteAllSubs = async (req: Request, res: Response) => {
   try {
-    const subscriptions = await BlogModel.find();
-    if (subscriptions.length === 0) {
+    const deletedSubs = await SubscriptionModel.deleteMany();
+    if (deletedSubs.deletedCount == 0) {
       return res.status(404).json({
-        message: "No  subscriptions to delete",
+        message: "There were no subscriptions to delete",
+        subscription: deletedSubs.deletedCount,
       });
     }
-
-    await SubscriptionModel.deleteMany();
     return res.status(204).json({
       message: "All subscriptions deleted successfully",
+      subscription: deletedSubs.deletedCount,
     });
+
   } catch (error) {
-    return res.status(500).json({
-        message: "Error deleting all subscriptions"
-    })
+    if (error instanceof Error) {
+      return res.status(500).json({
+        message: "Error while deleting subscriptions ",
+        error: error.message,
+      });
+    }else if(error instanceof mongoose.Error.ValidationError ){
+      const validationErrors = Object.values(error.errors).map(err=>err?.message)
+      return res.status(400).json({
+        message: "Model validation error",
+        errors: validationErrors
+      })
+
+    }
   }
 };

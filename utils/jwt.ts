@@ -1,57 +1,48 @@
-import jwt from 'jsonwebtoken'
-import { User } from '../types'
-import dotenv from 'dotenv'
-import e from 'express'
+import jwt, { JwtPayload } from "jsonwebtoken";
+import { User } from "../types";
+import dotenv from "dotenv";
+import { BadRequestError, NotFoundError, UnAuthorizedError } from "../exceptions/errors";
 
-dotenv.config()
+dotenv.config();
 
-const jwtSecretKey = process.env.JWT_SECRET
+const jwtSecretKey = process.env.JWT_SECRET;
 
-export const generateToken = (user: User)=>{
+export const generateToken = (user: User) => {
+  if (!jwtSecretKey) {
+    throw new NotFoundError("Jwt secret key to sign token, not found")
+  }
 
-    if(!jwtSecretKey){
-        return {
-            error: "Jwt secret key is required"
-        }
+  if(!user){
+    throw new BadRequestError("No user specified for token generation")
+  }
+
+  try {
+    const token = jwt.sign({ user }, jwtSecretKey, { expiresIn: 60 * 60 });
+
+    return {
+      message: "Jwt token generated successfully",
+      token,
+    };
+
+
+  } catch (error) {
+    throw error
+  }
+};
+
+export const verifyToken = (token: string) => {
+  try {
+    if (!jwtSecretKey) {
+      throw new NotFoundError("Jwt secret key not provided");
+    } else if (!token) {
+      throw new UnAuthorizedError("Auth Token required");
     }
 
-    try {
-        const token = jwt.sign({user}, jwtSecretKey, {expiresIn: 60*60})
-
-        return {
-            message: "Jwt token generated successfully",
-            token
-        }
-    } catch (error) {
-        if(error instanceof Error)
-        return {
-            error: "Error generating token "+error.message
-        }
-    }
-}
-
-export const verifyToken = (token: string)=>{
-
-    if(!jwtSecretKey){
-        return {
-            error: "Jwt secret key is required"
-        }
-    }else if(!token){
-        return {
-            error: "Token is required"
-        }
-    }
-    try {
-        const decodedUser = jwt.verify(token, jwtSecretKey)
-        return {
-            decodedUser
-        }
-    } catch (error) {
-        if(error instanceof Error){
-            return {
-                error: "Error while verifying token "+error.message
-            }
-        }
-    }
-    
-}
+    const decodedUser = jwt.verify(token, jwtSecretKey) as JwtPayload;
+    return {
+      decodedUser,
+    };
+  } catch (error) {
+    throw error
+  }
+};
