@@ -22,6 +22,9 @@ app.use(cors({
 connectToDb()
 app.use(express.json())
 
+app.use('/', (req: Request, res: Response)=>{
+    res.send("home page")
+})
 app.use('/api/auth', authRouter)
 //@ts-ignore
 app.use('/api', contactRouter)
