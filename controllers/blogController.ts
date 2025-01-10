@@ -12,6 +12,7 @@ export const createBlog = async (req: MulterRequest, res: Response) => {
   try {
     const filePath = req.file?.path;
 
+    
     if (!filePath || !fs.existsSync(filePath)) {
       throw new NotFoundError("No file uploaded");
     }
@@ -219,7 +220,7 @@ export const deleteBlog = async (req: Request, res: Response) => {
 
       await BlogModel.findByIdAndDelete(blog_id);
 
-      return res.status(201).json({
+      return res.status(204).json({
         message: "Blog deleted successfully",
       });
     }

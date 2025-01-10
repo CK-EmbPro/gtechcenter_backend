@@ -3,10 +3,13 @@ import dotenv from "dotenv";
 import { verifyToken } from "../utils/jwt";
 import { UserModel } from "../models/User";
 import { User } from "../types";
-import { ROLES } from "../constants/userRoles";
 import jwt from "jsonwebtoken";
 import { NotFoundError, UnAuthorizedError } from "../exceptions/errors";
 import mongoose from "mongoose";
+
+dotenv.config()
+
+const adminEmail = process.env.ADMIN_EMAIL
 
 export const adminMiddleware = async (
   req: Request,
@@ -30,7 +33,7 @@ export const adminMiddleware = async (
       return res.status(400).json({
         message: "Invalid token, user not found",
       });
-    } else if (currentUser.role != ROLES.ADMIN) {
+    } else if (currentUser.email != adminEmail) {
       return res.status(403).json({
         message: "The operation is not allowed",
       });

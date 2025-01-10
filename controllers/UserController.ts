@@ -7,22 +7,21 @@ import {
   UnAuthorizedError,
 } from "../exceptions/errors";
 import mongoose from "mongoose";
-import { ROLES } from "../constants/userRoles";
+import dotenv from "dotenv"
+
+dotenv.config()
+
+const adminEmail= process.env.ADMIN_EMAIL
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { first_name, last_name, email, password, phone_number, role } =
+    const { first_name, last_name, email, password, phone_number } =
       req.body;
 
-    if (role === ROLES.ADMIN) {
-      const existingAdmin = await UserModel.findOne({ role: ROLES.ADMIN });
-
-      if (existingAdmin) {
-        return res.status(409).json({
-          message: "Admin already exists",
-          user: existingAdmin,
-        });
-      }
+    if (email === adminEmail) {
+      return res.status(409).json({
+        message: "Admin already exists",
+      });
     }
 
     const existingUser = await UserModel.findOne({ email });
@@ -40,7 +39,6 @@ export const register = async (req: Request, res: Response) => {
       email,
       password,
       phone_number,
-      role,
     });
     const savedUser = await userToSave.save();
 
@@ -90,7 +88,9 @@ export const login = async (req: Request, res: Response) => {
     const token = generateToken(userToLogIn);
 
     return res.status(200).json({
-      message: `Welcome back ${userToLogIn?.role === ROLES.ADMIN ? userToLogIn?.role :""}`,
+      message: `Welcome back ${
+        userToLogIn?.email === adminEmail ? "ADMIN" : ""
+      }`,
       user: userToLogIn,
       token,
     });

@@ -5,7 +5,6 @@ import { subscriptionRouter } from "./routes/subscriptionRoutes";
 import { connectToDb } from "./config/dbConnection";
 import { blogRouter } from "./routes/blogRoutes";
 import { authRouter } from "./routes/authRoutes";
-import { authMiddleware } from "./middlewares/AuthMiddleware";
 import cors from 'cors'
 
 // Load environment variables
@@ -14,16 +13,17 @@ dotenv.config()
 const app:Express = express()
 const port= process.env.PORT
 
-// Establish connection to mongo_atlas db
 
 app.use(cors({
     origin: "*"
 }))
+
+// Establish connection to mongo_atlas db
 connectToDb()
 app.use(express.json())
 
-app.get('/', (req: Request, res: Response)=>{
-    res.send("home page")
+app.get('/', (req:Request, res: Response)=>{
+    res.send('home page')
 })
 app.use('/api/auth', authRouter)
 //@ts-ignore
